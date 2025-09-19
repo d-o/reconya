@@ -1464,33 +1464,26 @@ func (h *WebHandler) APICreateNetwork(w http.ResponseWriter, r *http.Request) {
 	
 	log.Printf("APICreateNetwork: Received request - name=%s, cidr=%s, description=%s", name, cidr, description)
 
-	data := struct {
-		Network *models.Network
-		Error   string
-	}{
-		Network: &models.Network{
-			Name:        name,
-			CIDR:        cidr,
-			Description: description,
-		},
-	}
-
 	// Validate CIDR
 	if cidr == "" {
-		data.Error = "CIDR address is required"
-		if err := h.templates.ExecuteTemplate(w, "components/network-modal.html", data); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"success": false,
+			"error": "CIDR address is required",
 		}
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 
 	// Validate CIDR format
 	_, _, err := net.ParseCIDR(cidr)
 	if err != nil {
-		data.Error = "Invalid CIDR format. Please use format like 192.168.1.0/24"
-		if err := h.templates.ExecuteTemplate(w, "components/network-modal.html", data); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"success": false,
+			"error": "Invalid CIDR format. Please use format like 192.168.1.0/24",
 		}
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 
@@ -1499,10 +1492,12 @@ func (h *WebHandler) APICreateNetwork(w http.ResponseWriter, r *http.Request) {
 	network, err := h.networkService.Create(name, cidr, description)
 	if err != nil {
 		log.Printf("APICreateNetwork: Error creating network: %v", err)
-		data.Error = fmt.Sprintf("Failed to create network: %v", err)
-		if err := h.templates.ExecuteTemplate(w, "components/network-modal.html", data); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"success": false,
+			"error": fmt.Sprintf("Failed to create network: %v", err),
 		}
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 	log.Printf("APICreateNetwork: Network created successfully: ID=%s, CIDR=%s", network.ID, network.CIDR)
@@ -1510,11 +1505,16 @@ func (h *WebHandler) APICreateNetwork(w http.ResponseWriter, r *http.Request) {
 	// Log the event
 	h.eventLogService.Log(models.NetworkCreated, fmt.Sprintf("Network %s (%s) created", network.CIDR, network.Name), "")
 
-	// Return success indicator that will trigger the frontend to handle the response
-	w.Header().Set("HX-Trigger", "network-saved")
-	w.WriteHeader(http.StatusOK)
-	// Return empty response - frontend will handle the success message
-	w.Write([]byte(""))
+	// Return JSON success response
+	w.Header().Set("Content-Type", "application/json")
+	response := map[string]interface{}{
+		"success": true,
+		"message": "Network created successfully",
+		"network": network,
+	}
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func (h *WebHandler) APIUpdateNetwork(w http.ResponseWriter, r *http.Request) {
@@ -1539,32 +1539,52 @@ func (h *WebHandler) APIUpdateNetwork(w http.ResponseWriter, r *http.Request) {
 
 	// Validate CIDR
 	if cidr == "" {
-		http.Error(w, "CIDR address is required", http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"success": false,
+			"error": "CIDR address is required",
+		}
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 
 	// Validate CIDR format
 	_, _, err := net.ParseCIDR(cidr)
 	if err != nil {
-		http.Error(w, "Invalid CIDR format. Please use format like 192.168.1.0/24", http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"success": false,
+			"error": "Invalid CIDR format. Please use format like 192.168.1.0/24",
+		}
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 
 	// Update network
 	network, err := h.networkService.Update(networkID, name, cidr, description)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to update network: %v", err), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"success": false,
+			"error": fmt.Sprintf("Failed to update network: %v", err),
+		}
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 
 	// Log the event
 	h.eventLogService.Log(models.NetworkUpdated, fmt.Sprintf("Network %s (%s) updated", network.CIDR, network.Name), "")
 
-	// Return success indicator that will trigger the frontend to handle the response
-	w.Header().Set("HX-Trigger", "network-saved")
-	w.WriteHeader(http.StatusOK)
-	// Return empty response - frontend will handle the success message
-	w.Write([]byte(""))
+	// Return JSON success response
+	w.Header().Set("Content-Type", "application/json")
+	response := map[string]interface{}{
+		"success": true,
+		"message": "Network updated successfully",
+		"network": network,
+	}
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func (h *WebHandler) APIDeleteNetwork(w http.ResponseWriter, r *http.Request) {
@@ -1587,7 +1607,12 @@ func (h *WebHandler) APIDeleteNetwork(w http.ResponseWriter, r *http.Request) {
 	if h.scanManager.IsRunning() {
 		currentNetwork := h.scanManager.GetCurrentNetwork()
 		if currentNetwork != nil && currentNetwork.ID == networkID {
-			http.Error(w, "Cannot delete network: a scan is currently running on this network. Please stop the scan first.", http.StatusConflict)
+			w.Header().Set("Content-Type", "application/json")
+			response := map[string]interface{}{
+				"success": false,
+				"error": "Cannot delete network: a scan is currently running on this network. Please stop the scan first.",
+			}
+			json.NewEncoder(w).Encode(response)
 			return
 		}
 	}
@@ -1595,19 +1620,34 @@ func (h *WebHandler) APIDeleteNetwork(w http.ResponseWriter, r *http.Request) {
 	// Get network info before deletion for logging
 	network, err := h.networkService.FindByID(networkID)
 	if err != nil {
-		http.Error(w, "Network not found", http.StatusNotFound)
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"success": false,
+			"error": "Network not found",
+		}
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 
 	// Check if network has devices before deletion
 	deviceCount, err := h.networkService.GetDeviceCount(networkID)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to check network devices: %v", err), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"success": false,
+			"error": fmt.Sprintf("Failed to check network devices: %v", err),
+		}
+		json.NewEncoder(w).Encode(response)
 		return
 	}
-	
+
 	if deviceCount > 0 {
-		http.Error(w, fmt.Sprintf("Cannot delete network: %d devices are still using this network. Please remove or reassign devices first.", deviceCount), http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"success": false,
+			"error": fmt.Sprintf("Cannot delete network: %d devices are still using this network. Please remove or reassign devices first.", deviceCount),
+		}
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 
@@ -1615,11 +1655,16 @@ func (h *WebHandler) APIDeleteNetwork(w http.ResponseWriter, r *http.Request) {
 	err = h.networkService.Delete(networkID)
 	if err != nil {
 		// Check if this is a foreign key constraint error
+		errorMsg := fmt.Sprintf("Failed to delete network: %v", err)
 		if strings.Contains(err.Error(), "FOREIGN KEY constraint failed") {
-			http.Error(w, "Cannot delete network: devices are still using this network. Please remove or reassign devices first.", http.StatusBadRequest)
-		} else {
-			http.Error(w, fmt.Sprintf("Failed to delete network: %v", err), http.StatusInternalServerError)
+			errorMsg = "Cannot delete network: devices are still using this network. Please remove or reassign devices first."
 		}
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"success": false,
+			"error": errorMsg,
+		}
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 
@@ -1628,8 +1673,13 @@ func (h *WebHandler) APIDeleteNetwork(w http.ResponseWriter, r *http.Request) {
 		h.eventLogService.Log(models.NetworkDeleted, fmt.Sprintf("Network %s (%s) deleted", network.CIDR, network.Name), "")
 	}
 
-	// Return empty response to remove the table row
-	w.WriteHeader(http.StatusOK)
+	// Return success response
+	w.Header().Set("Content-Type", "application/json")
+	response := map[string]interface{}{
+		"success": true,
+		"message": "Network deleted successfully",
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 // APINetworkDeleteInfo returns information about network deletion including affected devices

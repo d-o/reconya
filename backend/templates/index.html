@@ -906,6 +906,7 @@
                     <table class="w-full bg-gray-800 rounded-sm">
                         <thead class="bg-gray-700">
                             <tr>
+                                <th class="px-4 py-3 text-left text-green-500 font-semibold">Name</th>
                                 <th class="px-4 py-3 text-left text-green-500 font-semibold">Network</th>
                                 <th class="px-4 py-3 text-left text-green-500 font-semibold">Description</th>
                                 <th class="px-4 py-3 text-left text-green-500 font-semibold">Status</th>
@@ -914,6 +915,7 @@
                         </thead>
                         <tbody class="divide-y divide-gray-600">
                             ${networks.map(network => {
+                                const name = network.name || network.Name || 'Unnamed Network';
                                 const cidr = network.cidr || network.CIDR || 'N/A';
                                 const description = network.description || network.Description || 'No description';
                                 const status = network.status || network.Status || 'unknown';
@@ -922,13 +924,16 @@
                                 return `
                                     <tr class="hover:bg-gray-700 transition-colors">
                                         <td class="px-4 py-3">
+                                            <span class="font-medium text-gray-200">${name}</span>
+                                        </td>
+                                        <td class="px-4 py-3">
                                             <div class="flex items-center">
                                                 <div class="mr-2">
                                                     <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
                                                     </svg>
                                                 </div>
-                                                <span class="font-medium">${cidr}</span>
+                                                <code class="text-green-400 px-2 py-1 rounded text-sm bg-gray-900">${cidr}</code>
                                             </div>
                                         </td>
                                         <td class="px-4 py-3 text-gray-300">${description}</td>
@@ -1213,7 +1218,7 @@
     <div id="networkModal" class="modal hidden">
         <div class="modal-backdrop"></div>
         <div class="modal-container">
-            <div class="modal-content max-w-md w-full">
+            <div class="modal-content max-w-md">
                 <div id="network-modal-content">
                     <!-- Content will be loaded here -->
                 </div>

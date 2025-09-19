@@ -121,12 +121,18 @@ function deleteNetwork(networkId) {
             method: 'DELETE',
             credentials: 'include'
         })
-        .then(response => {
-            if (response.ok) {
-                loadNetworkList(); // Refresh the networks list
-                alert('Network deleted successfully');
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Check if we're on the networks page and use the appropriate refresh function
+                if (typeof window.loadNetworksPage === 'function' && window.location.pathname === '/networks') {
+                    window.loadNetworksPage(); // Use the main page function
+                } else {
+                    loadNetworkList(); // Use the list function for other contexts
+                }
+                alert(data.message || 'Network deleted successfully');
             } else {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                alert(data.error || 'Failed to delete network');
             }
         })
         .catch(error => {
@@ -194,7 +200,7 @@ function renderNetworkModal(data) {
             </div>
             
             <!-- Form -->
-            <form onsubmit="submitNetworkForm(event, '${isEdit ? 'PUT' : 'POST'}', '${isEdit ? `/api/networks/${network.id}` : '/api/networks'}')">
+            <form onsubmit="return submitNetworkForm(event, '${isEdit ? 'PUT' : 'POST'}', '${isEdit ? `/api/networks/${network.id}` : '/api/networks'}')">
                 ${error ? `
                     <div class="bg-red-600/10 border border-red-500 rounded p-3 mb-4">
                         <div class="flex items-center text-red-400">
@@ -267,10 +273,10 @@ function renderNetworkModal(data) {
 
 function submitNetworkForm(event, method, url) {
     event.preventDefault();
-    
+
     const form = event.target;
     const formData = new FormData(form);
-    
+
     fetch(url, {
         method: method,
         body: formData
@@ -279,7 +285,11 @@ function submitNetworkForm(event, method, url) {
     .then(data => {
         if (data.success) {
             closeModal('networkModal');
-            loadNetworkList(); // Refresh the network list
+            // Try to refresh using both methods to ensure the table updates
+            if (typeof window.loadNetworksPage === 'function') {
+                window.loadNetworksPage(); // Refresh main page table
+            }
+            loadNetworkList(); // Also refresh any other network lists
             // Also refresh scan control if it exists
             if (typeof window.loadScanControl === 'function') {
                 window.loadScanControl(false);
@@ -293,12 +303,16 @@ function submitNetworkForm(event, method, url) {
                     error: data.error || 'Failed to save network'
                 });
             }
+            // Also show an alert for user feedback
+            alert(data.error || 'Failed to save network');
         }
     })
     .catch(error => {
         console.error('Failed to submit network form:', error);
         alert('Failed to save network');
     });
+
+    return false; // Prevent default form submission
 }
 
 // Make functions available globally
