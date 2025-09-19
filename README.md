@@ -54,6 +54,7 @@ Install reconYa:
 ```bash
 git clone https://github.com/Dyneteq/reconya.git
 cd reconya
+npm install
 npm run install
 ```
 
