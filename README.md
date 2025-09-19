@@ -48,15 +48,13 @@ Before installing reconYa, ensure you have the following installed on your syste
 
 ### One-Command Installation
 
-**Prerequisites:** Node.js 18+ and npm must be installed.
-
-Install reconYa:
 ```bash
 git clone https://github.com/Dyneteq/reconya.git
 cd reconya
-npm install
-npm run install
+./install.sh
 ```
+
+The script will check for Node.js 18+ and npm, and guide you through installation if needed.
 
 This will:
 - Detect your operating system (macOS, Windows, Debian, or Red Hat-based)
