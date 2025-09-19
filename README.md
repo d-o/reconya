@@ -48,8 +48,9 @@ Before installing reconYa, ensure you have the following installed on your syste
 
 ### One-Command Installation
 
-The easiest way to install reconYa with all dependencies:
+**Prerequisites:** Node.js 18+ and npm must be installed.
 
+Install reconYa:
 ```bash
 git clone https://github.com/Dyneteq/reconya.git
 cd reconya
@@ -58,7 +59,7 @@ npm run install
 
 This will:
 - Detect your operating system (macOS, Windows, Debian, or Red Hat-based)
-- Install all required dependencies (Go, Node.js, nmap)
+- Install all required dependencies (Go, nmap)
 - Configure nmap permissions for MAC address detection
 - Set up the reconYa application
 - Install all Node.js dependencies
@@ -228,8 +229,9 @@ Reconya uses a multi-layered scanning approach that combines nmap integration wi
 ### Common Issues
 
 **Installation problems**
+- If `./install.sh` fails, try running it again with `sudo ./install.sh`
+- For manual installation, ensure you have Node.js 18+ installed
 - Run `npm run status` to check what's missing
-- Ensure you have Node.js 14+ installed
 - Try running `npm run install` again
 
 **No devices found**
