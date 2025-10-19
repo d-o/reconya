@@ -10,7 +10,8 @@
     "start:dev": "node scripts/start.js",
     "stop": "node scripts/stop.js",
     "status": "node scripts/status.js",
-    "logs": "node scripts/logs.js"
+    "logs": "node scripts/logs.js",
+    "bump-version": "bash scripts/bump-version.sh"
   },
   "dependencies": {
     "chalk": "^4.1.2",

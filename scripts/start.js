@@ -344,36 +344,54 @@ if (require.main === module) {
     const { spawn } = require('child_process');
     const path = require('path');
     const fs = require('fs');
-    
+
     console.log('Starting reconYa backend as daemon...');
-    
+
+    // Determine the port from .env file
+    const projectRoot = Utils.validatereconYaDirectory();
+    const envPath = path.join(projectRoot, 'backend', '.env');
+    let port = '3008'; // default
+    try {
+      if (fs.existsSync(envPath)) {
+        const envContent = fs.readFileSync(envPath, 'utf8');
+        const portMatch = envContent.match(/^PORT=(.+)$/m);
+        if (portMatch) {
+          port = portMatch[1].trim();
+        }
+      }
+    } catch (error) {
+      // Use default port if can't read .env
+    }
+
     // Create logs directory if it doesn't exist
     const logsDir = path.join(process.cwd(), 'logs');
     if (!fs.existsSync(logsDir)) {
       fs.mkdirSync(logsDir, { recursive: true });
     }
-    
+
     // Setup log files
     const logFile = path.join(logsDir, 'reconya.log');
     const errorFile = path.join(logsDir, 'reconya.error.log');
-    
+
     const out = fs.openSync(logFile, 'a');
     const err = fs.openSync(errorFile, 'a');
-    
+
     const child = spawn(process.execPath, [__filename], {
       detached: true,
       stdio: ['ignore', out, err]
     });
-    
+
     child.unref();
     console.log(`reconYa daemon started with PID: ${child.pid}`);
-    console.log(`Logs: ${logFile}`);
+    console.log(`\nAccess reconYa at: ${chalk.cyan(`http://localhost:${port}`)}`);
+    console.log(`Default login: ${chalk.yellow('admin')} / ${chalk.yellow('password')}`);
+    console.log(`\nLogs: ${logFile}`);
     console.log(`Errors: ${errorFile}`);
-    
+
     // Write PID file for daemon management
     const pidFile = path.join(process.cwd(), '.reconya.pid');
     fs.writeFileSync(pidFile, child.pid.toString());
-    
+
     process.exit(0);
   } else {
     // Run in terminal (persistent)
