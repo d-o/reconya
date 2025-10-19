@@ -324,17 +324,17 @@ function formatLogTime(dateString) {
 function saveDeviceChanges(deviceId) {
     const nameInput = document.getElementById(`device-name-${deviceId}`);
     const commentInput = document.getElementById(`device-comment-${deviceId}`);
-    
+
     if (!nameInput || !commentInput) {
         console.error('Device input fields not found');
         return;
     }
-    
+
     const data = {
         name: nameInput.value.trim(),
         comment: commentInput.value.trim()
     };
-    
+
     fetch(`/api/devices/${deviceId}`, {
         method: 'PUT',
         headers: {
@@ -346,16 +346,22 @@ function saveDeviceChanges(deviceId) {
     .then(response => response.json())
     .then(result => {
         if (result.success) {
-            // Show success feedback
-            const saveButton = document.querySelector(`[onclick="saveDeviceChanges('${deviceId}')"]`);
-            if (saveButton) {
-                const originalText = saveButton.textContent;
-                saveButton.textContent = 'Saved!';
-                saveButton.disabled = true;
-                setTimeout(() => {
-                    saveButton.textContent = originalText;
-                    saveButton.disabled = false;
-                }, 3000);
+            // Close the modal
+            closeModal('deviceModal');
+
+            // Refresh the devices list
+            if (typeof loadDevices === 'function') {
+                loadDevices(false);
+            }
+
+            // Refresh device list table if it exists
+            if (typeof loadDeviceList === 'function') {
+                loadDeviceList();
+            }
+
+            // Refresh network map if it exists
+            if (typeof window.loadNetworkMap === 'function') {
+                window.loadNetworkMap();
             }
         } else {
             alert('Failed to save device changes: ' + (result.error || 'Unknown error'));
