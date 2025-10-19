@@ -102,7 +102,7 @@ class ServiceStopper {
           }
         }
       } else {
-        // Unix-like: More comprehensive process killing
+        // Unix-like: More specific process killing (avoid killing browsers and other apps)
         const killCommands = [
           // Kill 'go run' processes with reconya
           ['pkill', ['-f', 'go run .*reconya']],
@@ -114,9 +114,8 @@ class ServiceStopper {
           ['pkill', ['-f', 'reconya.*main']],
           // Kill any process with reconya in the command line that's using port 3008
           ['pkill', ['-f', 'reconya.*3008']],
-          // Kill processes by name patterns
-          ['killall', ['-q', 'reconya']],
-          ['killall', ['-q', 'main']]
+          // Kill processes by name patterns (only reconya, not generic 'main')
+          ['killall', ['-q', 'reconya']]
         ];
 
         for (const [cmd, args] of killCommands) {

@@ -58,6 +58,11 @@ function renderDeviceGrid(devices) {
         return;
     }
 
+    // Debug: log first device to see all fields
+    if (devices && devices.length > 0) {
+        console.log('Sample device data (first device):', JSON.stringify(devices[0], null, 2));
+    }
+
     console.log('Devices length:', devices ? devices.length : 'null/undefined');
     if (!devices || devices.length === 0) {
         console.log('No devices found, showing empty message');
@@ -71,13 +76,34 @@ function renderDeviceGrid(devices) {
         return;
     }
 
-    // Filter out devices that have never been online
-    // Only show devices that have been seen at least once (have LastSeenOnlineAt timestamp or are currently online/offline)
+    // Filter devices:
+    // 1. Must have been seen online at least once
+    // 2. If offline, must have been seen within the last hour
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+
     const onlineDevices = devices.filter(device => {
-        return device.LastSeenOnlineAt ||
-               device.status === 'online' ||
-               device.status === 'offline' ||
-               device.status === 'idle';
+        // Try different field name variations
+        const lastSeenOnline = device.LastSeenOnlineAt || device.last_seen_online_at;
+
+        // Must have been seen online at least once
+        if (!lastSeenOnline && device.status !== 'online') {
+            return false;
+        }
+
+        // If device is offline, check if it was seen within last hour
+        if (device.status === 'offline') {
+            if (!lastSeenOnline) {
+                return false; // No last seen timestamp, hide it
+            }
+            const lastSeen = new Date(lastSeenOnline);
+            if (lastSeen < oneHourAgo) {
+                console.log(`Hiding offline device ${device.ipv4}, last seen ${lastSeen.toLocaleString()}`);
+                return false; // Offline for more than 1 hour, hide it
+            }
+        }
+
+        return true;
     });
 
     console.log('Filtered to', onlineDevices.length, 'devices that have been online (from', devices.length, 'total)');
@@ -110,23 +136,42 @@ function renderDeviceGrid(devices) {
         }
         
         // Check if device is currently being port scanned
-        const isPortScanning = device.port_scan_started_at && !device.port_scan_ended_at;
-        
+        // Try both snake_case and PascalCase field names
+        const portScanStarted = device.port_scan_started_at || device.PortScanStartedAt;
+        const portScanEnded = device.port_scan_ended_at || device.PortScanEndedAt;
+        const isPortScanning = portScanStarted && !portScanEnded;
+
+        // Debug log for first device to see field names
+        if (devices.indexOf(device) === 0) {
+            console.log('Device fields check:', {
+                ip: device.ipv4,
+                port_scan_started_at: device.port_scan_started_at,
+                PortScanStartedAt: device.PortScanStartedAt,
+                port_scan_ended_at: device.port_scan_ended_at,
+                PortScanEndedAt: device.PortScanEndedAt,
+                isPortScanning: isPortScanning
+            });
+        }
+
         gridHTML += `
-            <div class="rounded-sm p-4 transition-colors cursor-pointer relative min-h-[150px] flex flex-col" 
-                 style="background: var(--bg-secondary);" 
-                 onmouseover="this.style.background='var(--bg-tertiary)'" 
-                 onmouseout="this.style.background='var(--bg-secondary)'" 
+            <div class="rounded-sm p-4 transition-colors cursor-pointer relative min-h-[150px] flex flex-col"
+                 style="background: var(--bg-secondary);"
+                 onmouseover="this.style.background='var(--bg-tertiary)'"
+                 onmouseout="this.style.background='var(--bg-secondary)'"
                  onclick="loadDeviceModal('${device.id}')">
                 ${openPorts > 0 ? `<div class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" title="${openPorts} open ports"></div>` : ''}
                 ${filteredPorts > 0 ? `<div class="absolute top-2 right-${openPorts > 0 ? '5' : '2'} w-2 h-2 bg-yellow-500 rounded-full" title="${filteredPorts} filtered ports"></div>` : ''}
+
+                ${isPortScanning ? `
+                    <div class="absolute top-2 left-2">
+                        <i class="ti ti-scan text-blue-400 text-lg animate-pulse" title="Port scanning in progress"></i>
+                    </div>
+                ` : ''}
+
                 <div class="text-white font-semibold text-xl mb-2 break-all">${device.ipv4}</div>
                 ${device.mac ? `<div class="text-gray-600 text-xs mb-4">${device.mac}</div>` : '<div class="mb-4"></div>'}
                 <div class="flex-1 flex items-end justify-between">
                     <div class="text-gray-500 text-sm truncate opacity-75">${(device.hostname || device.name) ? (device.hostname || device.name) : ''}</div>
-                    <div class="flex items-center gap-1">
-                        ${isPortScanning ? `<i class="ti ti-search text-blue-400 text-xs animate-pulse" title="Port scanning in progress"></i>` : ''}
-                    </div>
                 </div>
             </div>
         `;

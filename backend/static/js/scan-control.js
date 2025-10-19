@@ -210,13 +210,23 @@ function formatScanTime(startTime) {
     return `${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
 }
 
+// Cache to prevent duplicate concurrent requests
+let scanControlLoading = false;
+
 function loadScanControl(showSpinner = true) {
     const scanControlContainer = document.getElementById('scan-control-container');
     if (!scanControlContainer) {
         return;
     }
-    
-    
+
+    // Prevent duplicate concurrent requests
+    if (scanControlLoading) {
+        console.log('Scan control already loading, skipping duplicate request');
+        return;
+    }
+
+    scanControlLoading = true;
+
     if (showSpinner) {
         scanControlContainer.innerHTML = `
             <div class="p-4 flex items-center justify-center" style="background: var(--bg-secondary);">
@@ -227,8 +237,16 @@ function loadScanControl(showSpinner = true) {
         `;
     }
     
-    fetch('/api/scan/control', { credentials: 'include' })
+    // Add timeout to prevent hanging requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+    fetch('/api/scan/control', {
+        credentials: 'include',
+        signal: controller.signal
+    })
         .then(response => {
+            clearTimeout(timeoutId);
             const contentType = response.headers.get('content-type');
             if (contentType && contentType.includes('application/json')) {
                 return response.json();
@@ -236,6 +254,7 @@ function loadScanControl(showSpinner = true) {
             return response.text();
         })
         .then(data => {
+            scanControlLoading = false;
             if (typeof data === 'object') {
                 const html = renderScanControlFromData(data);
                 scanControlContainer.innerHTML = html;
@@ -248,8 +267,11 @@ function loadScanControl(showSpinner = true) {
             }, 100);
         })
         .catch(error => {
+            scanControlLoading = false;
+            clearTimeout(timeoutId);
             console.error('Error loading scan control:', error);
-            scanControlContainer.innerHTML = '<div class="p-4 text-red-500 text-center" style="background: var(--bg-secondary);">Failed to load scan control</div>';
+            const errorMsg = error.name === 'AbortError' ? 'Request timed out' : 'Failed to load scan control';
+            scanControlContainer.innerHTML = `<div class="p-4 text-red-500 text-center" style="background: var(--bg-secondary);">${errorMsg}</div>`;
         });
 }
 
