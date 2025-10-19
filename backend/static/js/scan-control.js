@@ -105,8 +105,68 @@ function renderScanControlFromData(data) {
                         </button>
                     </div>
                 </div>
-                <div class="bg-green-600 h-2 rounded-full mb-4 overflow-hidden relative">
-                    <div class="absolute inset-0 scan-progress-animation"></div>
+                <div class="mb-4 flex justify-center items-center" style="min-height: 120px;">
+                    <div class="holographic-globe">
+                        <!-- Main rotating globe -->
+                        <svg class="globe-svg globe-layer-main" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Outer circle with gradient -->
+                            <defs>
+                                <radialGradient id="globeGradient">
+                                    <stop offset="0%" style="stop-color:rgba(34, 197, 94, 0.2)" />
+                                    <stop offset="70%" style="stop-color:rgba(34, 197, 94, 0.05)" />
+                                    <stop offset="100%" style="stop-color:transparent" />
+                                </radialGradient>
+                                <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:rgba(34, 197, 94, 0.1)" />
+                                    <stop offset="50%" style="stop-color:rgba(34, 197, 94, 0.6)" />
+                                    <stop offset="100%" style="stop-color:rgba(34, 197, 94, 0.1)" />
+                                </linearGradient>
+                            </defs>
+
+                            <circle cx="50" cy="50" r="45" fill="url(#globeGradient)" stroke="rgba(34, 197, 94, 0.6)" stroke-width="1.5" class="globe-circle"/>
+
+                            <!-- Latitude lines -->
+                            <ellipse cx="50" cy="50" rx="45" ry="12" fill="none" stroke="url(#lineGradient)" stroke-width="0.8" class="globe-lat globe-lat-1"/>
+                            <ellipse cx="50" cy="50" rx="45" ry="25" fill="none" stroke="rgba(34, 197, 94, 0.4)" stroke-width="0.8" class="globe-lat globe-lat-2"/>
+                            <ellipse cx="50" cy="50" rx="45" ry="38" fill="none" stroke="rgba(34, 197, 94, 0.3)" stroke-width="0.8" class="globe-lat globe-lat-3"/>
+
+                            <!-- Longitude lines -->
+                            <ellipse cx="50" cy="50" rx="12" ry="45" fill="none" stroke="rgba(34, 197, 94, 0.4)" stroke-width="0.8" class="globe-lon globe-lon-1"/>
+                            <ellipse cx="50" cy="50" rx="25" ry="45" fill="none" stroke="rgba(34, 197, 94, 0.35)" stroke-width="0.8" class="globe-lon globe-lon-2"/>
+                            <ellipse cx="50" cy="50" rx="38" ry="45" fill="none" stroke="rgba(34, 197, 94, 0.3)" stroke-width="0.8" class="globe-lon globe-lon-3"/>
+
+                            <!-- Center vertical line -->
+                            <line x1="50" y1="5" x2="50" y2="95" stroke="rgba(34, 197, 94, 0.4)" stroke-width="1" class="globe-meridian"/>
+
+                            <!-- Horizontal equator -->
+                            <line x1="5" y1="50" x2="95" y2="50" stroke="rgba(34, 197, 94, 0.4)" stroke-width="1" class="globe-equator"/>
+
+                            <!-- Corner nodes -->
+                            <circle cx="50" cy="5" r="2" fill="rgba(34, 197, 94, 0.8)" class="globe-node globe-node-1"/>
+                            <circle cx="50" cy="95" r="2" fill="rgba(34, 197, 94, 0.8)" class="globe-node globe-node-2"/>
+                            <circle cx="5" cy="50" r="2" fill="rgba(34, 197, 94, 0.8)" class="globe-node globe-node-3"/>
+                            <circle cx="95" cy="50" r="2" fill="rgba(34, 197, 94, 0.8)" class="globe-node globe-node-4"/>
+                        </svg>
+
+                        <!-- Secondary layer (counter-rotating for depth) -->
+                        <svg class="globe-svg globe-layer-secondary" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <ellipse cx="50" cy="50" rx="40" ry="20" fill="none" stroke="rgba(34, 197, 94, 0.2)" stroke-width="0.6" class="globe-secondary-1"/>
+                            <ellipse cx="50" cy="50" rx="20" ry="40" fill="none" stroke="rgba(34, 197, 94, 0.2)" stroke-width="0.6" class="globe-secondary-2"/>
+                        </svg>
+
+                        <!-- Pulse layer -->
+                        <svg class="globe-svg globe-layer-pulse" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="50" cy="50" r="20" fill="none" stroke="rgba(34, 197, 94, 0.8)" stroke-width="1.5" class="globe-pulse-1"/>
+                            <circle cx="50" cy="50" r="30" fill="none" stroke="rgba(34, 197, 94, 0.6)" stroke-width="1.2" class="globe-pulse-2"/>
+                            <circle cx="50" cy="50" r="35" fill="none" stroke="rgba(34, 197, 94, 0.4)" stroke-width="1" class="globe-pulse-3"/>
+                        </svg>
+
+                        <!-- Orbiting particles -->
+                        <div class="particle particle-1"></div>
+                        <div class="particle particle-2"></div>
+                        <div class="particle particle-3"></div>
+                        <div class="particle particle-4"></div>
+                    </div>
                 </div>
                 
                 <div class="grid grid-cols-3 gap-4 text-center">
@@ -163,25 +223,290 @@ function renderScanControlFromData(data) {
         </div>
         
         <style>
-        /* Simple progress bar animation */
-        @keyframes scan-progress {
+        /* Enhanced Holographic 3D Globe */
+        .holographic-globe {
+            width: 100px;
+            height: 100px;
+            position: relative;
+            perspective: 1200px;
+            transform-style: preserve-3d;
+        }
+
+        /* Chromatic aberration holographic effect */
+        .holographic-globe::before {
+            content: '';
+            position: absolute;
+            width: 120%;
+            height: 120%;
+            left: -10%;
+            top: -10%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%,
+                rgba(34, 197, 94, 0.3) 0%,
+                rgba(34, 197, 94, 0.15) 30%,
+                rgba(0, 255, 255, 0.1) 50%,
+                transparent 70%);
+            animation: holographic-pulse 4s ease-in-out infinite;
+            pointer-events: none;
+            filter: blur(8px);
+            z-index: -1;
+        }
+
+        /* Additional chromatic layer */
+        .holographic-globe::after {
+            content: '';
+            position: absolute;
+            width: 120%;
+            height: 120%;
+            left: -10%;
+            top: -10%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 70% 70%,
+                rgba(0, 255, 255, 0.2) 0%,
+                rgba(34, 197, 94, 0.1) 40%,
+                transparent 70%);
+            animation: holographic-pulse 4s ease-in-out infinite reverse;
+            pointer-events: none;
+            filter: blur(10px);
+            z-index: -1;
+        }
+
+        .globe-svg {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-style: preserve-3d;
+        }
+
+        /* Main layer - primary rotation */
+        .globe-layer-main {
+            animation: globe-rotate 10s linear infinite;
+            filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.6))
+                    drop-shadow(0 0 15px rgba(34, 197, 94, 0.4));
+            z-index: 3;
+        }
+
+        /* Secondary layer - counter rotation for depth */
+        .globe-layer-secondary {
+            animation: globe-rotate-reverse 15s linear infinite;
+            opacity: 0.4;
+            z-index: 2;
+        }
+
+        /* Pulse layer - static with expanding circles */
+        .globe-layer-pulse {
+            z-index: 4;
+        }
+
+        /* 3D Rotations with deeper perspective */
+        @keyframes globe-rotate {
             0% {
-                transform: translateX(-100%);
+                transform: rotateY(0deg) rotateX(20deg) rotateZ(0deg);
             }
             100% {
-                transform: translateX(100%);
+                transform: rotateY(360deg) rotateX(20deg) rotateZ(0deg);
             }
         }
 
-        .scan-progress-animation {
-            animation: scan-progress 2s ease-in-out infinite;
-            background: rgba(34, 197, 94, 0.8);
-            width: 40%;
-            height: 100%;
+        @keyframes globe-rotate-reverse {
+            0% {
+                transform: rotateY(360deg) rotateX(-15deg) rotateZ(0deg);
+            }
+            100% {
+                transform: rotateY(0deg) rotateX(-15deg) rotateZ(0deg);
+            }
         }
 
-        .bg-green-600.overflow-hidden {
-            border-radius: 9999px;
+        /* Enhanced holographic pulse */
+        @keyframes holographic-pulse {
+            0%, 100% {
+                opacity: 0.5;
+                transform: scale(1) rotate(0deg);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.1) rotate(5deg);
+            }
+        }
+
+        /* Pulse animation for scan circles */
+        @keyframes pulse-expand {
+            0% {
+                r: 10;
+                opacity: 1;
+                stroke-width: 1.5;
+            }
+            100% {
+                r: 48;
+                opacity: 0;
+                stroke-width: 0.5;
+            }
+        }
+
+        .globe-pulse-1 {
+            animation: pulse-expand 3s ease-out infinite;
+        }
+
+        .globe-pulse-2 {
+            animation: pulse-expand 3s ease-out infinite 1s;
+        }
+
+        .globe-pulse-3 {
+            animation: pulse-expand 3s ease-out infinite 2s;
+        }
+
+        /* Outer circle glow with chromatic effect */
+        .globe-circle {
+            animation: circle-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes circle-glow {
+            0%, 100% {
+                stroke: rgba(34, 197, 94, 0.6);
+                filter: drop-shadow(0 0 5px rgba(34, 197, 94, 0.8));
+            }
+            33% {
+                stroke: rgba(34, 197, 94, 0.8);
+                filter: drop-shadow(0 0 10px rgba(34, 197, 94, 1))
+                        drop-shadow(0 0 20px rgba(0, 255, 255, 0.3));
+            }
+            66% {
+                stroke: rgba(0, 255, 255, 0.6);
+                filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.8));
+            }
+        }
+
+        /* Latitude/Longitude line shimmer */
+        .globe-lat, .globe-lon, .globe-meridian, .globe-equator {
+            animation: line-shimmer 4s ease-in-out infinite;
+        }
+
+        .globe-lat-1 { animation-delay: 0s; }
+        .globe-lat-2 { animation-delay: 0.4s; }
+        .globe-lat-3 { animation-delay: 0.8s; }
+        .globe-lon-1 { animation-delay: 1.2s; }
+        .globe-lon-2 { animation-delay: 1.6s; }
+        .globe-lon-3 { animation-delay: 2s; }
+        .globe-meridian { animation-delay: 2.4s; }
+        .globe-equator { animation-delay: 2.8s; }
+
+        @keyframes line-shimmer {
+            0%, 100% {
+                stroke-opacity: 0.3;
+            }
+            50% {
+                stroke-opacity: 0.9;
+            }
+        }
+
+        /* Node pulsing */
+        .globe-node {
+            animation: node-pulse 2s ease-in-out infinite;
+        }
+
+        .globe-node-1 { animation-delay: 0s; }
+        .globe-node-2 { animation-delay: 0.5s; }
+        .globe-node-3 { animation-delay: 1s; }
+        .globe-node-4 { animation-delay: 1.5s; }
+
+        @keyframes node-pulse {
+            0%, 100% {
+                r: 1.5;
+                fill-opacity: 0.6;
+            }
+            50% {
+                r: 3;
+                fill-opacity: 1;
+                filter: drop-shadow(0 0 5px rgba(34, 197, 94, 1));
+            }
+        }
+
+        /* Orbiting particles */
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(34, 197, 94, 0.9);
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(34, 197, 94, 1),
+                       0 0 15px rgba(34, 197, 94, 0.6);
+            top: 50%;
+            left: 50%;
+            margin: -2px 0 0 -2px;
+        }
+
+        .particle-1 {
+            animation: orbit-1 8s linear infinite;
+        }
+
+        .particle-2 {
+            animation: orbit-2 10s linear infinite;
+        }
+
+        .particle-3 {
+            animation: orbit-3 12s linear infinite;
+        }
+
+        .particle-4 {
+            animation: orbit-4 9s linear infinite;
+        }
+
+        @keyframes orbit-1 {
+            0% {
+                transform: rotate(0deg) translateX(55px) rotate(0deg);
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: rotate(360deg) translateX(55px) rotate(-360deg);
+                opacity: 1;
+            }
+        }
+
+        @keyframes orbit-2 {
+            0% {
+                transform: rotate(90deg) translateX(50px) rotate(-90deg);
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: rotate(450deg) translateX(50px) rotate(-450deg);
+                opacity: 1;
+            }
+        }
+
+        @keyframes orbit-3 {
+            0% {
+                transform: rotate(180deg) translateX(58px) rotate(-180deg);
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: rotate(540deg) translateX(58px) rotate(-540deg);
+                opacity: 1;
+            }
+        }
+
+        @keyframes orbit-4 {
+            0% {
+                transform: rotate(270deg) translateX(53px) rotate(-270deg);
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: rotate(630deg) translateX(53px) rotate(-630deg);
+                opacity: 1;
+            }
         }
         </style>
     `;

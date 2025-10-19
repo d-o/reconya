@@ -789,17 +789,24 @@ func (h *WebHandler) APIUpdateDevice(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	deviceID := vars["id"]
 
-	name := r.FormValue("hostname")
-	comment := r.FormValue("comment")
+	// Parse JSON body
+	var data struct {
+		Name    string `json:"name"`
+		Comment string `json:"comment"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
 
-	log.Printf("Updating device %s: name='%s', comment='%s'", deviceID, name, comment)
+	log.Printf("Updating device %s: name='%s', comment='%s'", deviceID, data.Name, data.Comment)
 
 	var namePtr, commentPtr *string
-	if name != "" {
-		namePtr = &name
+	if data.Name != "" {
+		namePtr = &data.Name
 	}
-	if comment != "" {
-		commentPtr = &comment
+	if data.Comment != "" {
+		commentPtr = &data.Comment
 	}
 
 	device, err := h.deviceService.UpdateDevice(deviceID, namePtr, commentPtr)
@@ -811,9 +818,9 @@ func (h *WebHandler) APIUpdateDevice(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Successfully updated device %s", deviceID)
 
-	// Return JSON response for API call
+	// Return JSON response
 	w.Header().Set("Content-Type", "application/json")
-	response := map[string]interface{}{
+	response := map[string]any{
 		"success": true,
 		"device":  device,
 		"message": "Device updated successfully",
